@@ -40,3 +40,20 @@ Or open http://localhost:3000/signup to create your own company.
 ## Stack
 
 Next.js 16 (App Router, server actions), React 19, Tailwind CSS 4, Drizzle ORM with Postgres, Zod, Vitest.
+
+## Deploying to Cloudflare
+
+The app runs on Cloudflare Workers through the [OpenNext adapter](https://opennext.js.org/cloudflare), with uploads in an R2 bucket and Postgres hosted elsewhere (for example Neon).
+
+One-time setup:
+
+```bash
+npx wrangler login
+npx wrangler r2 bucket create totalcore-files
+npx wrangler secret put DATABASE_URL     # paste the Postgres connection string
+DATABASE_URL=<same string> npm run db:migrate
+```
+
+Then deploy with `npm run deploy`. To try the Cloudflare build locally first, copy `.dev.vars.example` to `.dev.vars` and run `npm run preview`.
+
+After changing `wrangler.jsonc`, run `npm run cf-typegen` to refresh `cloudflare-env.d.ts`.

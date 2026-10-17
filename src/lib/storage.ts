@@ -2,9 +2,10 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
-// File storage behind a small interface so the local-disk driver used in
-// development can be swapped for S3-compatible storage in production.
+// File storage behind a small interface: local disk in development,
+// Cloudflare R2 in production (STORAGE_DRIVER=r2).
 export interface StorageDriver {
   put(key: string, body: Buffer, contentType: string): Promise<void>;
   get(key: string): Promise<Buffer>;
@@ -35,13 +36,35 @@ class LocalDiskStorage implements StorageDriver {
   }
 }
 
+// Cloudflare R2, through the FILES bucket binding in wrangler.jsonc.
+class R2Storage implements StorageDriver {
+  private bucket() {
+    return getCloudflareContext().env.FILES;
+  }
+
+  async put(key: string, body: Buffer, contentType: string) {
+    await this.bucket().put(key, body, { httpMetadata: { contentType } });
+  }
+
+  async get(key: string) {
+    const object = await this.bucket().get(key);
+    if (!object) throw new Error(`File not found in storage: ${key}`);
+    return Buffer.from(await object.arrayBuffer());
+  }
+
+  async delete(key: string) {
+    await this.bucket().delete(key);
+  }
+}
+
 let driver: StorageDriver | undefined;
 
 export function storage(): StorageDriver {
   if (!driver) {
     const kind = process.env.STORAGE_DRIVER ?? "local";
-    if (kind !== "local") throw new Error(`Unsupported STORAGE_DRIVER: ${kind}`);
-    driver = new LocalDiskStorage(process.env.STORAGE_DIR ?? "./storage");
+    if (kind === "r2") driver = new R2Storage();
+    else if (kind === "local") driver = new LocalDiskStorage(process.env.STORAGE_DIR ?? "./storage");
+    else throw new Error(`Unsupported STORAGE_DRIVER: ${kind}`);
   }
   return driver;
 }

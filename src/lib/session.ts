@@ -3,8 +3,8 @@ import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { and, eq, gt } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { SESSION_COOKIE } from "./session-cookie";
 
+const SESSION_COOKIE = "tc_session";
 const SESSION_DAYS = 30;
 
 function hashToken(token: string) {
