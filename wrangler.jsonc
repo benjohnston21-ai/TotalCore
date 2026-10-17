@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "totalcore",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": { "enabled": true },
+  "vars": {
+    "STORAGE_DRIVER": "r2"
+  },
+  // Uploaded project files (drawings, photos, attachments).
+  "r2_buckets": [
+    {
+      "binding": "FILES",
+      "bucket_name": "totalcore-files"
+    }
+  ]
+  // DATABASE_URL is set as a secret: `npx wrangler secret put DATABASE_URL`
+}

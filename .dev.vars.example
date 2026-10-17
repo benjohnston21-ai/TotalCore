@@ -1,0 +1,2 @@
+# Secrets for `npm run preview` (wrangler). Copy to .dev.vars.
+DATABASE_URL=postgres://totalcore:totalcore@localhost:5432/totalcore
